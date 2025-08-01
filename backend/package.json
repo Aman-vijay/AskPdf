@@ -1,0 +1,39 @@
+{
+  "name": "node-starter",
+  "private": true,
+  "version": "1.0.0",
+  "description": "PDF Chat Backend with AI Integration",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "pdf",
+    "ai",
+    "chat",
+    "rag",
+    "gemini"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.4.0",
+    "helmet": "^7.1.0",
+    "llama-cloud-services": "^0.1.0",
+    "llamaindex": "^0.11.25",
+    "markdown-it": "^14.1.0",
+    "multer": "^1.4.5-lts.1",
+    "pdf-parse": "^1.1.1",
+    "uuid": "^10.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
+}
