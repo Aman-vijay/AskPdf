@@ -56,9 +56,28 @@ const ChatInterface = ({ document, onBack }) => {
       }
 
     } catch (error) {
+      console.error('Chat query error:', error);
+      
+      let errorContent = 'Sorry, I encountered an error while processing your question. Please try again.';
+      
+      // Provide more specific error messages based on error type
+      if (error.response) {
+        if (error.response.status === 404) {
+          errorContent = 'The document you are trying to chat with could not be found. It may have been deleted.';
+        } else if (error.response.status === 429) {
+          errorContent = 'You have sent too many requests. Please wait a moment before trying again.';
+        } else if (error.response.status >= 500) {
+          errorContent = 'The server encountered an error while processing your question. Please try again later.';
+        } else if (error.response.data?.message) {
+          errorContent = `Error: ${error.response.data.message}`;
+        }
+      } else if (error.request) {
+        errorContent = 'Unable to reach the server. Please check your connection and try again.';
+      }
+      
       const errorMessage = {
         type: 'assistant',
-        content: 'Sorry, I encountered an error while processing your question. Please try again.',
+        content: errorContent,
         isError: true,
         timestamp: new Date().toISOString()
       };

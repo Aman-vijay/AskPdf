@@ -56,7 +56,29 @@ const UploadArea = ({ onDocumentUploaded }) => {
     } catch (error) {
       setUploading(false);
       setProgress(0);
-      setError(error.response?.data?.message || 'Failed to upload PDF. Please try again.');
+      console.error('Upload error:', error);
+      
+      // Display more specific error messages based on error type
+      if (error.response) {
+        // Server returned an error response
+        if (error.response.status === 413) {
+          setError('The file is too large. Please upload a smaller PDF file.');
+        } else if (error.response.status === 415) {
+          setError('The file format is not supported. Please upload a valid PDF file.');
+        } else if (error.response.status === 429) {
+          setError('Too many upload attempts. Please try again later.');
+        } else if (error.response.status >= 500) {
+          setError('Server error. The system is currently unable to process your file. Please try again later.');
+        } else {
+          setError(error.response?.data?.message || 'Failed to upload PDF. Please try again.');
+        }
+      } else if (error.request) {
+        // No response received from server
+        setError('Unable to reach the server. Please check your connection and try again.');
+      } else {
+        // Other errors
+        setError('Failed to upload PDF. Please try again.');
+      }
     }
   }, [onDocumentUploaded]);
 
