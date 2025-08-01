@@ -2,13 +2,14 @@ import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs/promises';
-import pdfProcessor from '../services/pdfProcessor.js';
+import fsSync from 'fs';  // For synchronous and stream operations
+import {processPDF} from '../services/pdfProcessor.js';
 import dataStore from '../services/dataStore.js';
 import { validatePDF } from '../middleware/validation.js';
 
 const router = express.Router();
 
-// Configure multer for file uploads
+// multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, process.env.UPLOAD_DIR || 'uploads/');
@@ -33,7 +34,7 @@ const upload = multer({
   }
 });
 
-// Upload and process PDF
+
 router.post('/upload', upload.single('pdf'), validatePDF, async (req, res) => {
   try {
     if (!req.file) {
@@ -42,8 +43,9 @@ router.post('/upload', upload.single('pdf'), validatePDF, async (req, res) => {
 
     console.log(`📤 Received PDF upload: ${req.file.originalname}`);
 
-    // Process the PDF
-    const result = await pdfProcessor.processPDF(req.file.path, req.file.originalname);
+
+  const result = await processPDF(req.file.path, req.file.originalname);
+
 
     res.json({
       success: true,
@@ -60,8 +62,7 @@ router.post('/upload', upload.single('pdf'), validatePDF, async (req, res) => {
 
   } catch (error) {
     console.error('PDF upload error:', error);
-    
-    // Clean up uploaded file on error
+
     if (req.file) {
       try {
         await fs.unlink(req.file.path);
@@ -124,7 +125,6 @@ router.get('/documents', async (req, res) => {
   }
 });
 
-// Get document content (markdown)
 router.get('/documents/:documentId/content', async (req, res) => {
   try {
     const { documentId } = req.params;
@@ -152,7 +152,7 @@ router.get('/documents/:documentId/content', async (req, res) => {
   }
 });
 
-// Get specific page content
+
 router.get('/documents/:documentId/page/:pageNumber', async (req, res) => {
   try {
     const { documentId, pageNumber } = req.params;
@@ -180,36 +180,36 @@ router.get('/documents/:documentId/page/:pageNumber', async (req, res) => {
   }
 });
 
-// Delete document
-router.delete('/documents/:documentId', async (req, res) => {
+
+router.get('/documents/:documentId/file', async (req, res) => {
   try {
     const { documentId } = req.params;
-    
-    // Get document to find file path
+   
     const document = await dataStore.getDocument(documentId);
-    
-    // Delete from data store
-    await dataStore.deleteDocument(documentId);
-    
-    // Delete physical file
+  
     try {
-      await fs.unlink(document.storagePath);
-    } catch (fileError) {
-      console.warn('Could not delete physical file:', fileError.message);
+      await fs.access(document.storagePath);
+    } catch (error) {
+      return res.status(404).json({ error: 'PDF file not found' });
     }
+    
+   
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${document.originalName}"`);
+    
 
-    res.json({
-      success: true,
-      message: 'Document deleted successfully'
-    });
-
+    const fileStream = fsSync.createReadStream(document.storagePath);
+    fileStream.pipe(res);
+    
   } catch (error) {
-    console.error('Error deleting document:', error);
+    console.error('Error retrieving PDF file:', error);
     res.status(500).json({
-      error: 'Failed to delete document',
+      error: 'Failed to retrieve PDF file',
       message: error.message
     });
   }
 });
+
+
 
 export default router;

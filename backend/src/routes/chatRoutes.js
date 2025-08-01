@@ -1,33 +1,25 @@
 import express from 'express';
 import ragService from '../services/ragService.js';
-import pdfProcessor from '../services/pdfProcessor.js';
+import {processPDF} from '../services/pdfProcessor.js';
 import dataStore from '../services/dataStore.js';
 import { validateChatRequest } from '../middleware/validation.js';
 
 const router = express.Router();
 
-// Chat with document
 router.post('/query', validateChatRequest, async (req, res) => {
   try {
     const { query, documentId, conversationHistory = [] } = req.body;
 
     console.log(`💬 Chat query received for document: ${documentId}`);
 
-    // Verify document exists
-    const document = await pdfProcessor.getDocument(documentId);
+   
+    const document = await processPDF.getDocument(documentId);
 
     // Generate response using RAG
     const response = await ragService.generateResponse(query, documentId);
 
-    // Save chat message to database
-    await dataStore.saveChatMessage(
-      documentId,
-      query,
-      response.answer,
-      response.citations
-    );
-
-    // Generate follow-up questions
+  
+ 
     const followUpQuestions = await ragService.generateFollowUpQuestions(
       documentId, 
       [...conversationHistory, { question: query, answer: response.answer }]
@@ -55,7 +47,6 @@ router.post('/query', validateChatRequest, async (req, res) => {
   }
 });
 
-// Get citations for a specific response
 router.post('/citations', async (req, res) => {
   try {
     const { query, documentId } = req.body;
@@ -66,8 +57,8 @@ router.post('/citations', async (req, res) => {
       });
     }
 
-    // Get relevant chunks
-    const relevantChunks = await pdfProcessor.searchSimilarChunks(query, documentId, 10);
+   
+    const relevantChunks = await processPDF.searchSimilarChunks(query, documentId, 10);
 
     const citations = relevantChunks.map(chunk => ({
       pageNumber: chunk.pageNumber,
@@ -105,11 +96,9 @@ router.post('/search', async (req, res) => {
       });
     }
 
-    // Verify document exists
-    await pdfProcessor.getDocument(documentId);
+    await processPDF.getDocument(documentId);
 
-    // Search for relevant chunks
-    const results = await pdfProcessor.searchSimilarChunks(query, documentId, limit);
+    const results = await processPDF.searchSimilarChunks(query, documentId, limit);
 
     res.json({
       success: true,
@@ -134,14 +123,13 @@ router.post('/search', async (req, res) => {
   }
 });
 
-// Get conversation suggestions
+
 router.get('/suggestions/:documentId', async (req, res) => {
   try {
     const { documentId } = req.params;
 
-    const document = await pdfProcessor.getDocument(documentId);
+    const document = await processPDF.getDocument(documentId);
 
-    // Generate initial conversation starters
     const suggestions = await ragService.generateFollowUpQuestions(documentId, []);
 
     res.json({
@@ -161,29 +149,6 @@ router.get('/suggestions/:documentId', async (req, res) => {
   }
 });
 
-// Get chat history for a document
-router.get('/history/:documentId', async (req, res) => {
-  try {
-    const { documentId } = req.params;
-    const { limit = 50 } = req.query;
 
-    const history = await dataStore.getChatHistory(documentId, parseInt(limit));
-
-    res.json({
-      success: true,
-      data: {
-        history,
-        count: history.length
-      }
-    });
-
-  } catch (error) {
-    console.error('Chat history error:', error);
-    res.status(500).json({
-      error: 'Failed to retrieve chat history',
-      message: error.message
-    });
-  }
-});
 
 export default router;
