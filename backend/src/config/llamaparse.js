@@ -1,22 +1,16 @@
-// Create a mock LlamaParseService that doesn't cause crashes
-// This is a temporary solution until we can properly integrate llama-cloud-services
+import { LlamaParseReader } from 'llamaindex';
 
 class LlamaParseService {
   constructor() {
-    this.isAvailable = false;
-    console.warn('⚠️ LlamaParseService is disabled - Using fallback parsing');
+    this.reader = new LlamaParseReader();
   }
 
   async parseDocument(file) {
     try {
-      console.log('📄 Using fallback PDF parsing method');
-      // Return empty array as we're not actually parsing with LlamaIndex
-      // The system will fall back to the standard PDF parsing
-      return [];
+      const documents = await this.reader.loadData(file);
+      return documents;
     } catch (error) {
-      console.error('Error in LlamaParseService:', error);
-      // Return empty array instead of throwing
-      return [];
+      throw new Error(`Failed to parse document: ${error.message}`);
     }
   }
 }

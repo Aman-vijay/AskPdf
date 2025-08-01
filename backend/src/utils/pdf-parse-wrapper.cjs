@@ -10,7 +10,7 @@ try {
   originalPdfParse = require('pdf-parse');
 } catch (error) {
   console.error('Error loading pdf-parse:', error.message);
-  // Create a fallback function if the module fails to load
+ 
   originalPdfParse = async () => ({ 
     text: 'PDF parsing failed', 
     numpages: 0,
@@ -33,8 +33,7 @@ const wrappedPdfParse = function(...args) {
   }
 };
 
-// Copy all properties from the original
+
 Object.assign(wrappedPdfParse, originalPdfParse);
 
-// Export the wrapped version
 module.exports = wrappedPdfParse;
