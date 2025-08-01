@@ -1,38 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { FileText, MessageCircle, Upload, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { FileText, MessageCircle, Upload } from 'lucide-react';
 import UploadArea from './components/UploadArea';
 import DocumentViewer from './components/DocumentViewer';
 import ChatInterface from './components/ChatInterface';
-import DocumentList from './components/DocumentList';
-import { apiService } from './services/api';
 import './App.css';
 
 function App() {
-  const [currentView, setCurrentView] = useState('upload'); // 'upload', 'chat', 'documents'
+  const [currentView, setCurrentView] = useState('upload'); // 'upload', 'chat'
   const [currentDocument, setCurrentDocument] = useState(null);
-  const [documents, setDocuments] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    loadDocuments();
-  }, []);
-
-  const loadDocuments = async () => {
-    try {
-      const response = await apiService.getDocuments();
-      setDocuments(response.data);
-    } catch (error) {
-      console.error('Error loading documents:', error);
-    }
-  };
 
   const handleDocumentUploaded = (document) => {
-    setCurrentDocument(document);
-    setCurrentView('chat');
-    loadDocuments();
-  };
-
-  const handleDocumentSelect = (document) => {
     setCurrentDocument(document);
     setCurrentView('chat');
   };
@@ -40,11 +17,6 @@ function App() {
   const handleBackToUpload = () => {
     setCurrentView('upload');
     setCurrentDocument(null);
-  };
-
-  const handleViewDocuments = () => {
-    setCurrentView('documents');
-    loadDocuments();
   };
 
   return (
@@ -72,17 +44,6 @@ function App() {
                 <Upload className="w-4 h-4 inline mr-2" />
                 Upload
               </button>
-              <button
-                onClick={handleViewDocuments}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  currentView === 'documents'
-                    ? 'bg-primary-100 text-primary-700'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <FileText className="w-4 h-4 inline mr-2" />
-                Documents
-              </button>
               {currentDocument && (
                 <button
                   onClick={() => setCurrentView('chat')}
@@ -109,24 +70,16 @@ function App() {
           </div>
         )}
 
-        {currentView === 'documents' && (
-          <DocumentList
-            documents={documents}
-            onDocumentSelect={handleDocumentSelect}
-            onDocumentsChange={loadDocuments}
-          />
-        )}
-
         {currentView === 'chat' && currentDocument && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-1">
-              <DocumentViewer document={currentDocument} />
-            </div>
-            <div className="lg:col-span-2">
               <ChatInterface
                 document={currentDocument}
                 onBack={handleBackToUpload}
               />
+            </div>
+            <div className="lg:col-span-2">
+              <DocumentViewer document={currentDocument} />
             </div>
           </div>
         )}
