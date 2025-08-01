@@ -11,10 +11,7 @@ const ChatInterface = ({ document, onBack }) => {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
-  useEffect(() => {
-    loadChatHistory();
-    loadSuggestions();
-  }, [document.documentId]);
+  // No need to load chat history or suggestions on component mount
 
   useEffect(() => {
     scrollToBottom();
@@ -24,35 +21,7 @@ const ChatInterface = ({ document, onBack }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const loadChatHistory = async () => {
-    try {
-      const response = await apiService.getChatHistory(document.documentId);
-      console.log('Chat history loaded:', response.data);
-      const history = response.data?.data?.history?.map(item => [
-        { type: 'user', content: item.userMessage, timestamp: item.createdAt },
-        { 
-          type: 'assistant', 
-          content: item.aiResponse, 
-         citations: Array.isArray(item.citations) ? item.citations : [],
-
-          timestamp: item.createdAt 
-        }
-      ]).flat();
-      setMessages(history);
-    } catch (error) {
-      console.error('Error loading chat history:', error);
-    }
-  };
-
-  const loadSuggestions = async () => {
-    try {
-      const response = await apiService.getSuggestions(document.documentId);
-      setSuggestions(response.data.data.suggestions);
-
-    } catch (error) {
-      console.error('Error loading suggestions:', error);
-    }
-  };
+  // Removed loadSuggestions functionality
 
   const handleSendMessage = async (message = inputValue) => {
     if (!message.trim() || isLoading) return;

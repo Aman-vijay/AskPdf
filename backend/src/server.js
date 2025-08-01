@@ -12,14 +12,15 @@ import chatRoutes from './routes/chatRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { createUploadsDir } from './utils/fileUtils.js';
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
+const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
 
 // Security middleware
 app.use(helmet());
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://yourdomain.com'] 
-    : ['http://localhost:3000', 'http://localhost:5173'],
+    ? process.env.FRONTEND_URL_PROD
+    : [frontendUrl],
   credentials: true
 }));
 
@@ -31,11 +32,18 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// Body parsing middleware
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Create uploads directory
+
+app.use((req, res, next) => {
+  res.setHeader("Content-Security-Policy", `frame-ancestors 'self' ${frontendUrl}`);
+  next();
+});
+
+
+
 createUploadsDir();
 
 // Routes
@@ -52,16 +60,8 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Database health check
-app.get('/api/health/storage', async (req, res) => {
-  res.json({ 
-    status: 'OK', 
-    storage: 'Local File System',
-    timestamp: new Date().toISOString()
-  });
-});
 
-// Error handling middleware
+
 app.use(errorHandler);
 
 // 404 handler
@@ -69,10 +69,10 @@ app.use('*', (req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-// Handle uncaught exceptions to prevent server crashes
+
 process.on('uncaughtException', (error) => {
   console.error('UNCAUGHT EXCEPTION - keeping process alive:', error);
-  // You can add notification logic here (email, log to monitoring service, etc.)
+ 
 });
 
 // Handle unhandled promise rejections
@@ -81,9 +81,9 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 const server = app.listen(PORT, () => {
-  console.log(`🚀 PDF Chat Backend running on port ${PORT}`);
-  console.log(`📚 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🗄️ Storage: Local File System + In-Memory Data`);
+  console.log(` PDF Chat Backend running on port ${PORT}`);
+  console.log(` Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(` Storage: Local File System + In-Memory Data`);
 });
 
 // Handle server errors

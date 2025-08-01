@@ -40,6 +40,9 @@ api.interceptors.response.use(
 );
 
 export const apiService = {
++  // Helper methods
+  getBaseUrl: () => API_BASE_URL,
+  
   // PDF Management
   uploadPDF: async (file) => {
     const formData = new FormData();
@@ -81,11 +84,7 @@ export const apiService = {
     });
   },
 
-  getChatHistory: async (documentId, limit = 50) => {
-    return api.get(`/chat/history/${documentId}`, {
-      params: { limit },
-    });
-  },
+  // Chat history removed - using in-memory chat only
 
   searchDocument: async (documentId, query, limit = 10) => {
     return api.post('/chat/search', {
