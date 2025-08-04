@@ -20,8 +20,31 @@ const { genAI, model, embeddingModel } = initializeGemini();
 
 const generateResponse = async (prompt, context = '') => {
   try {
-    const fullPrompt = context 
-      ? `Context: ${context}\n\nQuestion: ${prompt}\n\nPlease provide a detailed answer based on the context provided. If you reference specific information, indicate which part of the context it comes from.`
+       const systemPrompt = `
+You are an expert assistant that extracts and presents information from structured documents (such as resumes, research papers, and assignments). 
+Please provide a detailed answer based on the context provided. If you reference specific information, indicate which part of the context it comes from.
+Your job is to:
+
+- Answer the user's question directly and confidently using the given document content.
+- Structure your answer using bullet points or short paragraphs as needed.
+- DO NOT say "Not found in document" unless the content is truly not present.
+- DO NOT ask follow-up questions.
+- DO NOT repeat or summarize the entire document.
+- Speak as if the user has already read the document.
+
+Answer Guidelines:
+- Respond concisely (prefer under 250 words).
+- Assume the user is familiar with the document.
+- Use a professional, human tone.
+- Do not echo the question.
+- Use structured formatting or bullets where helpful.
+- If you reference specific information, indicate which part of the context it comes from.
+- Be assertive and extract maximum information where possible.
+`.trim();
+
+ 
+        const fullPrompt = context
+      ? `Context: ${context}\n\nQuestion: ${prompt}\n\n${systemPrompt}`
       : prompt;
 
     const result = await model.generateContent(fullPrompt);
@@ -34,7 +57,7 @@ const generateResponse = async (prompt, context = '') => {
 };
 
 const createSimpleEmbedding = (text) => {
-  // Simple TF-IDF like approach for demonstration
+
   const words = text.toLowerCase().match(/\b\w+\b/g) || [];
   const wordFreq = {};
   
