@@ -1,5 +1,4 @@
 import geminiService from '../config/gemini.js';
-import {processPDF} from './pdfProcessor.js';
 import dataStore from './dataStore.js';
 
 class RAGService {
@@ -7,8 +6,11 @@ class RAGService {
     try {
       console.log(`🔍 Processing query: "${query}" for document: ${documentId}`);
       
+      // Generate embedding for the query
+      const queryEmbedding = await this.generateEmbedding(query);
+      
       // Retrieve relevant chunks from the document
-      const relevantChunks = await processPDF.searchSimilarChunks(query, documentId, 5);
+      const relevantChunks = await dataStore.searchSimilarChunks(queryEmbedding, documentId, 5);
       
       if (relevantChunks.length === 0) {
         return {
@@ -54,6 +56,10 @@ class RAGService {
     });
     
     return context;
+  }
+
+  async generateEmbedding(text) {
+    return await geminiService.generateEmbedding(text);
   }
 
   extractCitations(chunks, answer) {
@@ -116,7 +122,7 @@ class RAGService {
 
   async generateFollowUpQuestions(documentId, conversationHistory = []) {
     try {
-      const document = await processPDF.getDocument(documentId);
+      const document = await dataStore.getDocument(documentId);
 
       // Get some sample chunks for context
       const chunks = await dataStore.getDocumentChunks(documentId);
