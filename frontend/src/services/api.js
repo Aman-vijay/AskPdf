@@ -40,7 +40,7 @@ api.interceptors.response.use(
 );
 
 export const apiService = {
-+  // Helper methods
+  // Helper methods
   getBaseUrl: () => API_BASE_URL,
   
   // PDF Management
@@ -84,7 +84,7 @@ export const apiService = {
     });
   },
 
-  // Chat history removed - using in-memory chat only
+
 
   searchDocument: async (documentId, query, limit = 10) => {
     return api.post('/chat/search', {

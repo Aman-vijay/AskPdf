@@ -8,7 +8,8 @@ export const chatQuery = async (req, res) => {
 
         console.log(`💬 Chat query received for document: ${documentId}`);
 
-        const document = await processPDF.getDocument(documentId);
+        // Get document info
+        const document = await dataStore.getDocument(documentId);
 
         const response = await ragService.generateResponse(query, documentId);
 
@@ -49,7 +50,11 @@ export const getCitations = async (req, res) => {
             });
         }
 
-        const relevantChunks = await processPDF.searchSimilarChunks(query, documentId, 10);
+        // Generate embedding for the query
+        const queryEmbedding = await ragService.generateEmbedding(query);
+        
+        // Search for similar chunks
+        const relevantChunks = await dataStore.searchSimilarChunks(queryEmbedding, documentId, 10);
 
         const citations = relevantChunks.map(chunk => ({
             pageNumber: chunk.pageNumber,
@@ -86,9 +91,14 @@ export const searchDocument = async (req, res) => {
             });
         }
 
-        await processPDF.getDocument(documentId);
+        // Verify document exists
+        await dataStore.getDocument(documentId);
 
-        const results = await processPDF.searchSimilarChunks(query, documentId, limit);
+        // Generate embedding for the query
+        const queryEmbedding = await ragService.generateEmbedding(query);
+        
+        // Search for similar chunks
+        const results = await dataStore.searchSimilarChunks(queryEmbedding, documentId, limit);
 
         res.json({
             success: true,
@@ -117,7 +127,8 @@ export const getSuggestions = async (req, res) => {
     try {
         const { documentId } = req.params;
 
-        const document = await processPDF.getDocument(documentId);
+        // Get document info
+        const document = await dataStore.getDocument(documentId);
 
         const suggestions = await ragService.generateFollowUpQuestions(documentId, []);
 

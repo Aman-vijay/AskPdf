@@ -38,7 +38,7 @@ const DocumentViewer = ({ document }) => {
   };
 
   return (
-    <div className={`card ${fullscreen ? 'fixed inset-0 z-50 m-0 rounded-none' : 'h-[calc(100vh-12rem)] sticky top-8'}`}>
+    <div className={`card ${fullscreen ? 'fixed inset-0 z-50 m-0 rounded-none' : 'h-[calc(100vh-8rem)] sticky top-4'}`}>
       <div className="flex items-start justify-between p-4 border-b">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
