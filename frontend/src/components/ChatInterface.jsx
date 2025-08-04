@@ -21,71 +21,89 @@ const ChatInterface = ({ document, onBack }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Removed loadSuggestions functionality
-
-  const handleSendMessage = async (message = inputValue) => {
-    if (!message.trim() || isLoading) return;
-
-    const userMessage = { 
-      type: 'user', 
-      content: message.trim(),
-      timestamp: new Date().toISOString()
-    };
-    
-    setMessages(prev => [...prev, userMessage]);
-    setInputValue('');
-    setIsLoading(true);
-    setSuggestions([]);
-
+  //Handle load Suggestions
+  const handleSuggestions = async () => {
+    if (!document) return;
     try {
-      const response = await apiService.chatQuery(document.documentId, message.trim());
-      
-      const assistantMessage = {
-        type: 'assistant',
-        content: response.data.data.answer,
-        citations: Array.isArray(response.data.data.citations) ? response.data.data.citations : [],
-        confidence: response.data.data.confidence,
-        timestamp: new Date().toISOString()
-      };
-
-      setMessages(prev => [...prev, assistantMessage]);
-      
-      // Load new suggestions if available
-      if (response.data.followUpQuestions) {
-        setSuggestions(response.data.followUpQuestions);
-      }
-
+      const response = await apiService.getSuggestions(document.documentId);
+      console.log("Suggestions response:", response.data);
+      setSuggestions(response.data.data.suggestions || []);
     } catch (error) {
-      console.error('Chat query error:', error);
-      
-      let errorContent = 'Sorry, I encountered an error while processing your question. Please try again.';
-      
-      // Provide more specific error messages based on error type
-      if (error.response) {
-        if (error.response.status === 404) {
-          errorContent = 'The document you are trying to chat with could not be found. It may have been deleted.';
-        } else if (error.response.status === 429) {
-          errorContent = 'You have sent too many requests. Please wait a moment before trying again.';
-        } else if (error.response.status >= 500) {
-          errorContent = 'The server encountered an error while processing your question. Please try again later.';
-        } else if (error.response.data?.message) {
-          errorContent = `Error: ${error.response.data.message}`;
-        }
-      } else if (error.request) {
-        errorContent = 'Unable to reach the server. Please check your connection and try again.';
-      }
-      
-      const errorMessage = {
-        type: 'assistant',
-        content: errorContent,
-        isError: true,
-        timestamp: new Date().toISOString()
-      };
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
+      console.error('Error loading suggestions:', error);
+      setSuggestions([]);
     }
   };
+  // Load suggestions when document is set
+  useEffect(() => {
+    if (document) {
+      handleSuggestions();
+    }
+  }, [document]);
+
+  console.log("Suggestions loaded:", suggestions);
+
+const handleSendMessage = async (messageArg) => {
+  const message = (messageArg ?? inputValue).trim();
+  if (!message || isLoading) return;
+
+  const userMessage = {
+    type: 'user',
+    content: message,
+    timestamp: new Date().toISOString(),
+  };
+
+  setMessages((prev) => [...prev, userMessage]);
+  setInputValue('');
+  setIsLoading(true);
+  setSuggestions([]);
+
+  try {
+    const response = await apiService.chatQuery(document.documentId, message);
+
+    const assistantMessage = {
+      type: 'assistant',
+      content: response.data.data.answer,
+      citations: Array.isArray(response.data.data.citations) ? response.data.data.citations : [],
+      confidence: response.data.data.confidence,
+      timestamp: new Date().toISOString(),
+    };
+
+    setMessages((prev) => [...prev, assistantMessage]);
+
+    if (response.data.followUpQuestions) {
+      setSuggestions(response.data.followUpQuestions);
+    }
+  } catch (error) {
+    console.error('Chat query error:', error);
+    let errorContent = 'Sorry, I encountered an error.';
+
+    if (error.response) {
+      if (error.response.status === 404) {
+        errorContent = 'Document not found.';
+      } else if (error.response.status === 429) {
+        errorContent = 'Too many requests. Try again later.';
+      } else if (error.response.status >= 500) {
+        errorContent = 'Server error.';
+      } else if (error.response.data?.message) {
+        errorContent = `Error: ${error.response.data.message}`;
+      }
+    } else if (error.request) {
+      errorContent = 'No server response.';
+    }
+
+    const errorMessage = {
+      type: 'assistant',
+      content: errorContent,
+      isError: true,
+      timestamp: new Date().toISOString(),
+    };
+
+    setMessages((prev) => [...prev, errorMessage]);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -95,6 +113,7 @@ const ChatInterface = ({ document, onBack }) => {
   };
 
   const handleSuggestionClick = (suggestion) => {
+    setInputValue(suggestion);
     handleSendMessage(suggestion);
   };
 
@@ -108,7 +127,7 @@ const ChatInterface = ({ document, onBack }) => {
   };
 
   return (
-    <div className="card h-[calc(100vh-12rem)] flex flex-col">
+    <div className="card h-[calc(100vh-8rem)] flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200">
         <div className="flex items-center space-x-3">
@@ -143,12 +162,13 @@ const ChatInterface = ({ document, onBack }) => {
             {suggestions.length > 0 && (
               <div className="space-y-2 max-w-md mx-auto">
                 {suggestions.map((suggestion, index) => (
+                  
                   <button
                     key={index}
                     onClick={() => handleSuggestionClick(suggestion)}
-                    className="w-full p-3 text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors text-sm text-gray-700"
+                    className="w-full p-3 text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors text-sm text-[#9E7BBA]"
                   >
-                    "{suggestion}"
+                    ·{suggestion}
                   </button>
                 ))}
               </div>
@@ -184,7 +204,7 @@ const ChatInterface = ({ document, onBack }) => {
                     : 'bg-gray-50'
               }`}>
                 <div className="prose prose-sm max-w-none">
-                  <p className={`m-0 ${message.type === 'user' ? 'text-white' : message.isError ? 'text-red-700' : 'text-gray-900'}`}>
+                  <p className={`m-0 ${message.type === 'user' ? 'text-black' : message.isError ? 'text-red-700' : 'text-gray-900'}`}>
                     {message.content}
                   </p>
                 </div>
@@ -247,28 +267,9 @@ const ChatInterface = ({ document, onBack }) => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Suggestions */}
-      {Array.isArray(suggestions) && suggestions.length > 0 && (
-
-        <div className="px-4 py-2 border-t border-gray-100">
-          <p className="text-xs text-gray-500 mb-2">Suggested questions:</p>
-          <div className="flex flex-wrap gap-2">
-            {suggestions.map((suggestion, index) => (
-              <button
-                key={index}
-                onClick={() => handleSuggestionClick(suggestion)}
-                className="px-3 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded-full transition-colors text-gray-700"
-                disabled={isLoading}
-              >
-                {suggestion}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Input */}
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4 border-t text-black border-gray-200">
         <div className="flex space-x-3">
           <div className="flex-1 relative">
             <textarea
@@ -285,8 +286,8 @@ const ChatInterface = ({ document, onBack }) => {
           </div>
           <button
             onClick={() => handleSendMessage()}
-            disabled={!inputValue.trim() || isLoading}
-            className="px-4 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            disabled={ isLoading}
+            className="px-3 py-1 bg-[#9E7BBA] text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <Send className="w-4 h-4" />
           </button>
