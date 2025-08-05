@@ -6,10 +6,10 @@ class RAGService {
     try {
       console.log(`🔍 Processing query: "${query}" for document: ${documentId}`);
       
-    
+      // Generate embedding for the query
       const queryEmbedding = await this.generateEmbedding(query);
       
-      
+      // Retrieve relevant chunks from the document
       const relevantChunks = await dataStore.searchSimilarChunks(queryEmbedding, documentId, 5);
       
       if (relevantChunks.length === 0) {
@@ -20,16 +20,16 @@ class RAGService {
         };
       }
 
-    
+      // Prepare context from relevant chunks
       const context = this.prepareContext(relevantChunks);
       
-     
+      // Generate response using Gemini
       const answer = await geminiService.generateResponse(query, context);
       
-     
+      // Extract citations
       const citations = this.extractCitations(relevantChunks, answer);
       
-    
+      // Calculate confidence score
       const confidence = this.calculateConfidence(relevantChunks);
       
       console.log(`✅ Generated response with ${citations.length} citations`);
@@ -67,11 +67,11 @@ class RAGService {
     const usedPages = new Set();
     
     chunks.forEach((chunk, index) => {
-    
+      // Simple citation extraction based on content similarity
       const chunkWords = chunk.content.toLowerCase().split(/\W+/);
       const answerWords = answer.toLowerCase().split(/\W+/);
       
-     
+      // Check if significant portion of chunk content appears in answer
       const commonWords = chunkWords.filter(word => 
         word.length > 3 && answerWords.includes(word)
       );
@@ -90,7 +90,7 @@ class RAGService {
       }
     });
     
-  
+    // Sort citations by page number
     return citations.sort((a, b) => a.pageNumber - b.pageNumber);
   }
 
@@ -139,7 +139,7 @@ Please provide 3 concise, specific questions that would help explore the documen
 
       const response = await geminiService.generateResponse(prompt);
       
-      
+      // Parse the response to extract questions
       const questions = this.parseFollowUpQuestions(response);
       
       return questions;
@@ -151,7 +151,7 @@ Please provide 3 concise, specific questions that would help explore the documen
   }
 
   parseFollowUpQuestions(response) {
-   
+    // Simple parsing to extract questions
     const lines = response.split('\n').filter(line => line.trim());
     const questions = [];
     
