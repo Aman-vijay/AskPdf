@@ -103,19 +103,25 @@ const createChunks = (pages, chunkSize = 1000, overlap = 200) => {
 };
 
 const vectorizeChunks = async (chunks) => {
-  const vectorized = [];
-
-  for (const chunk of chunks) {
-    try {
+  const results = await Promise.allSettled(
+    chunks.map(async (chunk) => {
       const embedding = await geminiService.generateEmbedding(chunk.content);
-      vectorized.push({ ...chunk, embedding });
-    } catch (error) {
-      console.error(`❌ Error vectorizing chunk ${chunk.id}:`, error.message);
-    }
+      return { ...chunk, embedding };
+    })
+  );
+
+  const vectorized = results
+    .filter(result => result.status === 'fulfilled')
+    .map(result => result.value);
+
+  const failed = results.filter(result => result.status === 'rejected');
+  if (failed.length > 0) {
+    console.warn(`⚠️ ${failed.length} chunks failed to embed.`);
   }
 
   return vectorized;
 };
+
 
 const generateSummary = (text) => {
   const sentences = text
@@ -144,7 +150,7 @@ export const processPDF = async (filePath, originalName) => {
       processingStatus: 'processing',
     });
 
-    // Try LlamaParse first
+  
     let pages = [];
     let fullText = '';
     let numpages = 0;
@@ -178,7 +184,18 @@ export const processPDF = async (filePath, originalName) => {
 
     const markdownContent = convertToMarkdown(fullText);
     const chunks = createChunks(pages);
-    const vectorizedChunks = await vectorizeChunks(chunks);
+    const vectorizedChunks = await Promise.all(
+  chunks.map(async (chunk, index) => {
+    const embedding = await geminiService.generateEmbedding(chunk.content);
+    return {
+      ...chunk,
+      embedding,
+      chunkIndex: index,
+      documentId
+    };
+  })
+);
+
 
     await dataStore.saveDocumentChunks(documentId, vectorizedChunks);
 
@@ -186,6 +203,8 @@ export const processPDF = async (filePath, originalName) => {
       processingStatus: 'completed',
       pageCount: numpages,
     });
+
+    // await fs.unlink(filePath); 
 
     console.log(`✅ PDF processed successfully: ${originalName} (${numpages} pages)`);
 

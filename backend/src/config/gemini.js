@@ -3,111 +3,101 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Initialize the API client
+// Initialize Gemini models
 const initializeGemini = () => {
   if (!process.env.GEMINI_API_KEY) {
     throw new Error('GEMINI_API_KEY is required');
   }
-  
+
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
   const embeddingModel = genAI.getGenerativeModel({ model: 'embedding-001' });
-  
-  return { genAI, model, embeddingModel };
+
+  return { model, embeddingModel };
 };
 
-const { genAI, model, embeddingModel } = initializeGemini();
+const { model, embeddingModel } = initializeGemini();
 
+// Generate answer from context using Gemini
 const generateResponse = async (prompt, context = '') => {
   try {
-       const systemPrompt = `
-You are an expert assistant that extracts and presents information from structured documents (such as resumes, research papers, and assignments). 
-Please provide a detailed answer based on the context provided. If you reference specific information, indicate which part of the context it comes from.
-Your job is to:
+    const systemPrompt = `
+You are an AI assistant specialized in information retrieval from documents. Your task is to:
 
-- Answer the user's question directly and confidently using the given document content.
-- Structure your answer using bullet points or short paragraphs as needed.
-- DO NOT say "Not found in document" unless the content is truly not present.
-- DO NOT ask follow-up questions.
-- DO NOT repeat or summarize the entire document.
-- Speak as if the user has already read the document.
+1. Extract precise information from the provided document context
+2. Answer the user's question directly using ONLY the information in the context
+3. If the exact information isn't in the context, say "This information is not found in the document"
 
-Answer Guidelines:
-- Respond concisely (prefer under 250 words).
-- Assume the user is familiar with the document.
-- Use a professional, human tone.
-- Do not echo the question.
-- Use structured formatting or bullets where helpful.
-- If you reference specific information, indicate which part of the context it comes from.
-- Be assertive and extract maximum information where possible.
+IMPORTANT GUIDELINES:
+- Be precise and factual - only use information explicitly stated in the context
+- Use direct quotes when appropriate with page/section references
+- Format responses clearly with bullet points or numbered lists
+- Maintain the original terminology used in the document
+- For numerical data, provide exact figures as shown in the document
+- Do not make assumptions beyond what is explicitly stated
+- Do not generalize or provide information not in the context
+- Do not include personal opinions or external knowledge
+
+If analyzing a resume, report specific credentials, dates, and experiences exactly as written.
+If analyzing a research paper, cite specific findings, methodologies, and conclusions with precision.
+If analyzing an assignment, extract the exact requirements, deadlines, and evaluation criteria.
 `.trim();
 
- 
-        const fullPrompt = context
+    const fullPrompt = context
       ? `Context: ${context}\n\nQuestion: ${prompt}\n\n${systemPrompt}`
       : prompt;
 
     const result = await model.generateContent(fullPrompt);
     const response = await result.response;
+
     return response.text();
   } catch (error) {
-    console.error('Error generating response:', error);
+    console.error('❌ Error generating response:', error);
     throw new Error('Failed to generate AI response');
   }
 };
 
-const createSimpleEmbedding = (text) => {
+// Generate embedding using Gemini embedding model
 
-  const words = text.toLowerCase().match(/\b\w+\b/g) || [];
-  const wordFreq = {};
-  
-  words.forEach(word => {
-    wordFreq[word] = (wordFreq[word] || 0) + 1;
-  });
 
-  // Create a simple vector representation
-  const vector = [];
-  const commonWords = Object.keys(wordFreq).slice(0, 100);
-  
-  for (let i = 0; i < 768; i++) {
-    const word = commonWords[i % commonWords.length];
-    vector.push(wordFreq[word] || 0);
-  }
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-  return vector;
-};
+const generateEmbedding = async (text, retries = 3) => {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+     
+      await delay(50); 
+      const result = await embeddingModel.embedContent({
+        content: { parts: [{ text }] },
+        taskType: 'retrieval_document', 
+      });
 
-const generateEmbedding = async (text) => {
-  try {
-    // For now, we'll use a simple text-based similarity approach
-    // In production, you might want to use a dedicated embedding service
-    return createSimpleEmbedding(text);
-  } catch (error) {
-    console.error('Error generating embedding:', error);
-    throw new Error('Failed to generate embedding');
+      return result.embedding.values;
+    } catch (error) {
+      if (attempt === retries) {
+        console.error(`❌ Failed embedding after ${retries} attempts:`, error.message);
+        throw new Error('Failed to generate embedding');
+      } else {
+        console.warn(`⚠️ Embedding attempt ${attempt} failed. Retrying...`);
+        await delay(200 * attempt); // Exponential backoff
+      }
+    }
   }
 };
 
-const calculateSimilarity = (vector1, vector2) => {
-  if (vector1.length !== vector2.length) return 0;
-  
-  let dotProduct = 0;
-  let norm1 = 0;
-  let norm2 = 0;
-  
-  for (let i = 0; i < vector1.length; i++) {
-    dotProduct += vector1[i] * vector2[i];
-    norm1 += vector1[i] * vector1[i];
-    norm2 += vector2[i] * vector2[i];
-  }
-  
-  if (norm1 === 0 || norm2 === 0) return 0;
-  
-  return dotProduct / (Math.sqrt(norm1) * Math.sqrt(norm2));
-};
+// const generateEmbedding = async (text) => {
+//   try {
+//     const result = await embeddingModel.embedContent({
+//       content: { parts: [{ text }] },
+//     });
+//     return result.embedding.values;
+//   } catch (error) {
+//     console.error('❌ Error generating embedding:', error);
+//     throw new Error('Failed to generate embedding');
+//   }
+// };
 
 export default {
   generateResponse,
-  generateEmbedding,
-  calculateSimilarity
+  generateEmbedding
 };

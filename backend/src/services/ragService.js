@@ -10,7 +10,7 @@ class RAGService {
       const queryEmbedding = await this.generateEmbedding(query);
       
       // Retrieve relevant chunks from the document
-      const relevantChunks = await dataStore.searchSimilarChunks(queryEmbedding, documentId, 5);
+      const relevantChunks = await dataStore.searchSimilarChunks(queryEmbedding, documentId, 10);
       
       if (relevantChunks.length === 0) {
         return {
@@ -125,7 +125,7 @@ class RAGService {
 
       // Get some sample chunks for context
       const chunks = await dataStore.getDocumentChunks(documentId);
-      const documentSummary = chunks.slice(0, 3).map(chunk => chunk.content).join('\n\n').substring(0, 1000);
+      const documentSummary = chunks.map(chunk => chunk.content).join('\n\n').substring(0, 1000);
       
       const prompt = `Based on this document summary and conversation history, suggest 3 relevant follow-up questions:
 
@@ -151,7 +151,7 @@ Please provide 3 concise, specific questions that would help explore the documen
   }
 
   parseFollowUpQuestions(response) {
-    // Simple parsing to extract questions
+
     const lines = response.split('\n').filter(line => line.trim());
     const questions = [];
     
