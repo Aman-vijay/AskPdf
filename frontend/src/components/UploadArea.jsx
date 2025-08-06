@@ -10,74 +10,66 @@ const UploadArea = ({ onDocumentUploaded }) => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
 
-  const onDrop = useCallback(async (acceptedFiles) => {
-    const file = acceptedFiles[0];
-    if (!file) return;
+ const onDrop = useCallback(async (acceptedFiles) => {
+  const file = acceptedFiles[0];
+  if (!file) return;
 
-    if (file.type !== 'application/pdf') {
-      setError('Please upload a PDF file only.');
-      return;
-    }
+  if (file.type !== 'application/pdf') {
+    setError('Please upload a PDF file only.');
+    return;
+  }
 
-    if (file.size > 50 * 1024 * 1024) { // 50MB limit
-      setError('File size must be less than 50MB.');
-      return;
-    }
+  if (file.size > 50 * 1024 * 1024) { // 50MB limit
+    setError('File size must be less than 50MB.');
+    return;
+  }
 
-    setError(null);
-    setSuccess(false);
-    setUploading(true);
-    setProgress(0);
+  setError(null);
+  setSuccess(false);
+  setUploading(true);
+  setProgress(0);
 
-    try {
-   
-      const progressInterval = setInterval(() => {
-        setProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90;
-          }
-          return prev + Math.random() * 10;
-        });
-      }, 200);
+  try {
+ 
+    const response = await apiService.uploadPDF(file, (percent) => {
+      setProgress(percent);
+    });
 
-      const response = await apiService.uploadPDF(file);
-      console.log(response.data.data)
-      
-      clearInterval(progressInterval);
-      setProgress(100);
-      
-      setTimeout(() => {
-        setSuccess(true);
-        setUploading(false);
-        onDocumentUploaded(response.data.data);
-      }, 500);
+    for (let i = 61; i <= 99; i++) {
+  await new Promise(resolve => setTimeout(resolve, 50)); 
+  setProgress(i);
+}
 
-    } catch (error) {
+    setProgress(100);
+    setTimeout(() => {
+      setSuccess(true);
       setUploading(false);
-      setProgress(0);
-      console.error('Upload error:', error);
-      
-     
-      if (error.response) {
-      
-        if (error.response.status === 413) {
-          setError('The file is too large. Please upload a smaller PDF file.');
-        } else if (error.response.status === 415) {
-          setError('The file format is not supported. Please upload a valid PDF file.');
-        } else if (error.response.status >= 500) {
-          setError('Server error. The system is currently unable to process your file. Please try again later.');
-        } else {
-          setError(error.response?.data?.message || 'Failed to upload PDF. Please try again.');
-        }
-      } else if (error.request) {
-    
-        setError('Unable to reach the server. Please check your connection and try again.');
+      onDocumentUploaded(response.data.data);
+    }, 500);
+
+  } catch (error) {
+    setUploading(false);
+    setProgress(0);
+    console.error('Upload error:', error);
+
+    if (error.response) {
+      if (error.response.status === 413) {
+        setError('The file is too large. Please upload a smaller PDF file.');
+      } else if (error.response.status === 415) {
+        setError('The file format is not supported. Please upload a valid PDF file.');
+      } else if (error.response.status >= 500) {
+        setError('Server error. The system is currently unable to process your file. Please try again later.');
       } else {
-        setError('Failed to upload PDF. Please try again.');
+        setError(error.response?.data?.message || 'Failed to upload PDF. Please try again.');
       }
+    } else if (error.request) {
+      setError('Unable to reach the server. Please check your connection and try again.');
+    } else {
+      setError('Failed to upload PDF. Please try again.');
     }
-  }, [onDocumentUploaded]);
+  }
+}, [onDocumentUploaded]);
+
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,

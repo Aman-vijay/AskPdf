@@ -43,17 +43,23 @@ export const apiService = {
   // Helper methods
   getBaseUrl: () => API_BASE_URL,
   
-  // PDF Management
-  uploadPDF: async (file) => {
-    const formData = new FormData();
-    formData.append('pdf', file);
-    
-    return api.post('/pdf/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-  },
+ uploadPDF: async (file, onProgress) => {
+  const formData = new FormData();
+  formData.append('pdf', file);
+  
+  return api.post('/pdf/upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+    onUploadProgress: (progressEvent) => {
+        if (onProgress) {
+        const percentCompleted = Math.round((progressEvent.loaded * 60) / progressEvent.total);
+        onProgress(percentCompleted); 
+      }
+    }
+  });
+},
+
 
   getDocuments: async () => {
     return api.get('/pdf/documents');
