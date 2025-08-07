@@ -7,7 +7,7 @@ export const validatePDF = (req, res, next) => {
     return res.status(400).json({ error: 'Only PDF files are allowed' });
   }
 
-  if (req.file.size > (parseInt(process.env.MAX_FILE_SIZE) || 50 * 1024 * 1024)) {
+  if (req.file.size > (parseInt(process.env.MAX_FILE_SIZE) || 10 * 1024 * 1024)) {
     return res.status(400).json({ error: 'File size too large' });
   }
 

@@ -19,8 +19,8 @@ const UploadArea = ({ onDocumentUploaded }) => {
     return;
   }
 
-  if (file.size > 50 * 1024 * 1024) { // 50MB limit
-    setError('File size must be less than 50MB.');
+  if (file.size > 10 * 1024 * 1024) { // 10MB limit
+    setError('File size must be less than 10MB.');
     return;
   }
 
@@ -151,7 +151,7 @@ const UploadArea = ({ onDocumentUploaded }) => {
             </div>
             <div className="flex items-center justify-center space-x-2 text-sm text-gray-500">
               <FileText className="w-4 h-4" />
-              <span>PDF files only, up to 50MB</span>
+              <span>PDF files only, up to 10MB</span>
             </div>
           </div>
         )}

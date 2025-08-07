@@ -7,7 +7,7 @@ Built using React Js, Node.js/Express, and Google Gemini API, the app implements
 ##  Overview
 
 This project is a similar to Google NotebookLM clone that allows users to:
-- Upload large PDF files upto 50 mb with built-in viewing capabilities
+- Upload large PDF files (up to 10MB)
 - Interact with documents through an intelligent chat interface
 - Receive efficient responses with minimal token usage
 - Navigate documents through clickable citations
@@ -17,7 +17,7 @@ This project is a similar to Google NotebookLM clone that allows users to:
 
 Document Management
 
- - Upload large PDF files (up to 50MB)
+ - Upload large PDF files (up to 10MB)
 
  - View documents directly in-browser
 
@@ -88,7 +88,7 @@ Document Management
 
    # File Upload Configuration
    UPLOAD_DIR=uploads
-   MAX_FILE_SIZE=52428800
+   MAX_FILE_SIZE=10485760
    SIMILARITY_THRESHOLD=0.1
 
    # Vector Database Configuration
@@ -226,7 +226,7 @@ GET /api/chat/suggestions/:documentId
 ##  Configuration
 
 ### File Upload Limits
-- Default: 50MB per file
+- Default: 10MB per file
 - Configure via `MAX_FILE_SIZE` environment variable
 
 
