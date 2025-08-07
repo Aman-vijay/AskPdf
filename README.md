@@ -1,82 +1,55 @@
-# AskPDF - Google NotebookLM Clone
+# AskPDF 
 
-A comprehensive web application that enables users to upload and interact with PDF documents through an intelligent chat interface. Built with React (Next.js) frontend and Node.js/Express backend, featuring advanced AI-powered document analysis and retrieval-augmented generation (RAG) capabilities.
+A powerful full-stack web application that allows users to upload and interact with PDF documents through an intelligent chat interface. Designed to provide a seamless experience for reading, understanding, and querying documents using AI.
 
-## 🎯 Assignment Overview
+Built using Next.js, Node.js/Express, and Google Gemini API, the app implements a Retrieval-Augmented Generation (RAG) pipeline for highly relevant and contextual answers.
 
-This project is a take-home assignment to build a Google NotebookLM clone that allows users to:
-- Upload large PDF files with built-in viewing capabilities
+##  Overview
+
+This project is a similar to Google NotebookLM clone that allows users to:
+- Upload large PDF files upto 50 mb with built-in viewing capabilities
 - Interact with documents through an intelligent chat interface
 - Receive efficient responses with minimal token usage
 - Navigate documents through clickable citations
+- Uses LlamaParse for advanced PDF parsing; falls back to pdf-parse for reliability. Gemini handles both response generation and embeddings.
 
-## ✨ Features
+## Features
 
-### Core Functionality
-- **📄 PDF Upload & Viewing**: Support for large PDF files (up to 50MB) with integrated PDF viewer
-- **💬 Intelligent Chat Interface**: AI-powered chat system for document interaction
-- **🔗 Citation & Navigation**: Clickable citations that reference specific pages
-- **🔍 Advanced Search**: Semantic search within document content
-- **📱 Responsive Design**: Modern, mobile-friendly interface built with Next.js and Tailwind CSS
+Document Management
 
-### AI & Processing
-- **🤖 Google Gemini Integration**: Leverages Gemini Pro for response generation
-- **🧠 RAG Implementation**: Retrieval-Augmented Generation for accurate, context-aware responses
-- **📊 Vector Embeddings**: Semantic search capabilities with similarity scoring
-- **📝 Smart Chunking**: Intelligent text chunking with overlap for better context preservation
-- **🎯 Confidence Scoring**: Response confidence and relevance metrics
+ - Upload large PDF files (up to 50MB)
 
-### Performance Optimizations
-- **⚡ Efficient Token Usage**: Optimized AI queries to minimize token consumption
-- **🚀 Fast Load Times**: Optimized for handling large PDFs efficiently
-- **💾 Memory Management**: Efficient document storage and retrieval
-- **🔄 Async Processing**: Non-blocking PDF processing
+ - View documents directly in-browser
 
-## 🏗️ Architecture
+ - See upload progress and file metadata
 
-### Frontend (Next.js + React)
-```
-frontend/
-├── src/
-│   ├── app/                 # Next.js app directory
-│   │   ├── globals.css      # Global styles
-│   │   ├── layout.tsx       # Root layout
-│   │   └── page.tsx         # Home page
-│   ├── components/          # React components
-│   │   ├── DocumentManager.tsx    # Document management
-│   │   ├── InitialInterface.tsx   # Main chat interface
-│   │   ├── Main.tsx              # Main application wrapper
-│   │   ├── common/               # Shared components
-│   │   └── home/                 # Home page components
-│   ├── services/
-│   │   └── apiService.ts    # Backend API communication
-│   ├── ui/                  # UI components
-│   └── utils/               # Utility functions
-├── package.json
-└── tailwind.config.ts       # Tailwind CSS configuration
-```
+ - Delete documents when no longer needed
 
-### Backend (Node.js + Express)
-```
-backend/
-├── src/
-│   ├── config/
-│   │   └── gemini.js        # Google Gemini AI configuration
-│   ├── middleware/
-│   │   ├── errorHandler.js  # Error handling middleware
-│   │   └── validation.js    # Request validation
-│   ├── routes/
-│   │   ├── chatRoutes.js    # Chat and search endpoints
-│   │   └── pdfRoutes.js     # PDF management endpoints
-│   ├── services/
-│   │   ├── pdfProcessor.js  # PDF processing and text extraction
-│   │   └── ragService.js    # RAG implementation
-│   └── utils/
-│       └── fileUtils.js     # File handling utilities
-├── uploads/                 # PDF file storage
-├── package.json
-└── server.js               # Express server entry point
-```
+ AI-Powered Chat
+
+ - Ask questions about your PDFs
+
+- Answers include clickable citations pointing to exact page numbers
+
+- Suggested follow-up questions for deeper exploration
+
+ Smart Search
+
+- Embedding-based semantic search for locating relevant sections
+
+
+ Optimized Processing
+
+- Fast PDF parsing with LlamaParse or fallback to pdf-parse
+
+- Smart text chunking with overlaps for context preservation
+
+- Vector embedding via Google Gemini Embedding API
+
+- Asynchronous and memory-efficient architecture
+
+
+
 
 ## 🚀 Quick Start
 
@@ -84,6 +57,7 @@ backend/
 - Node.js (v16 or higher)
 - npm or yarn
 - Google Gemini API key
+- LLAMA CLOUD API KEY
 
 ### Installation
 
@@ -113,8 +87,9 @@ backend/
    GEMINI_API_KEY=your_gemini_api_key_here
 
    # File Upload Configuration
-   MAX_FILE_SIZE=50000000
    UPLOAD_DIR=uploads
+   MAX_FILE_SIZE=52428800
+   SIMILARITY_THRESHOLD=0.1
 
    # Vector Database Configuration
    VECTOR_DIMENSION=768
@@ -123,6 +98,10 @@ backend/
    # Rate Limiting
    RATE_LIMIT_WINDOW_MS=900000
    RATE_LIMIT_MAX_REQUESTS=100
+   
+   # Frontend Url 
+   FRONTEND_URL= Your Frontend Url
+   FRONTEND_URL_PROD= Production Frontend Url 
    ```
 
 4. **Frontend Setup**
@@ -131,7 +110,7 @@ backend/
    npm install
    
    # Create environment file
-   echo "NEXT_PUBLIC_API_URL=http://localhost:3000" > .env.local
+   echo "NEXT_PUBLIC_API_URL=http://localhost:5000" > .env.local
    ```
 
 5. **Get Gemini API Key**
@@ -144,7 +123,7 @@ backend/
 1. **Start Backend Server**
    ```bash
    cd backend
-   npm run dev
+   npm start
    # Server runs on http://localhost:5000
    ```
 
@@ -152,11 +131,11 @@ backend/
    ```bash
    cd frontend
    npm run dev
-   # Application runs on http://localhost:3000
+   # Application runs on http://localhost:5173
    ```
 
 3. **Access Application**
-   Open [http://localhost:3000](http://localhost:3000) in your browser
+   Open [http://localhost:5173](http://localhost:5173) in your browser
 
 ## 📚 API Documentation
 
@@ -188,10 +167,8 @@ GET /api/pdf/documents
 ```http
 DELETE /api/pdf/document/:documentId
 ```
+### Chat Queries
 
-### Chat Interface
-
-#### Query Document
 ```http
 POST /api/chat/query
 Content-Type: application/json
@@ -202,12 +179,6 @@ Content-Type: application/json
   "conversationHistory": []
 }
 ```
-
-**Response includes:**
-- AI-generated answer
-- Page-specific citations
-- Confidence scores
-- Follow-up question suggestions
 
 #### Search Document
 ```http
@@ -220,8 +191,22 @@ Content-Type: application/json
   "limit": 10
 }
 ```
+### Citation 
 
-## 🎯 Usage Flow
+```http
+POST /api/chat/citations
+Content-Type: application/json
+
+
+```
+
+#### Get Conversation Suggestions
+```http
+GET /api/chat/suggestions/:documentId
+```
+
+
+##  Usage Flow
 
 1. **Upload PDF**: Users upload a PDF document through the interface
 2. **Processing**: Backend extracts text, creates chunks, and generates embeddings
@@ -230,7 +215,7 @@ Content-Type: application/json
 5. **Intelligent Responses**: AI provides answers with citations and page references
 6. **Citation Navigation**: Users click citations to navigate to specific pages
 
-## 🛡️ Security Features
+##  Security Features
 
 - **Helmet.js**: Security headers and CORS protection
 - **Rate Limiting**: Prevent API abuse (100 requests per 15 minutes)
@@ -238,11 +223,20 @@ Content-Type: application/json
 - **Input Sanitization**: Query validation and sanitization
 - **Error Handling**: Comprehensive error management
 
-## 🔧 Configuration
+##  Configuration
 
 ### File Upload Limits
 - Default: 50MB per file
 - Configure via `MAX_FILE_SIZE` environment variable
+
+
+
+##  Performance Optimizations
+
+- **Chunking Strategy**: Optimal chunk sizes for better retrieval
+- **Memory Management**: Efficient document storage
+- **Caching**: In-memory document caching
+- **Async Processing**: Non-blocking PDF processing
 
 ### Vector Search
 - Similarity threshold: 0.7 (configurable)
@@ -254,25 +248,12 @@ Content-Type: application/json
 - Responsive design with Tailwind CSS
 - Component-based architecture for maintainability
 
-## 🧪 Testing
 
-### Backend Health Check
-```bash
-curl http://localhost:5000/api/health
-```
 
-### Frontend Development
-```bash
-cd frontend
-npm run dev
-```
-
-## 🚀 Performance Optimizations
+##  Performance Optimizations
 
 ### Token Efficiency
 - **Smart Context Selection**: Only relevant chunks are sent to AI
-- **Conversation History**: Maintains context without redundant queries
-- **Confidence Scoring**: Reduces unnecessary follow-up queries
 
 ### Memory & Speed
 - **Chunking Strategy**: Optimal chunk sizes for better retrieval
@@ -280,56 +261,7 @@ npm run dev
 - **Caching**: In-memory document caching for faster access
 - **Lazy Loading**: Components load as needed
 
-## 🔮 Implementation Highlights
 
-### AI Integration
-- **Google Gemini Pro**: Advanced language model for response generation
-- **Vector Embeddings**: Semantic understanding of document content
-- **RAG System**: Combines retrieval and generation for accurate responses
-
-### PDF Processing
-- **Text Extraction**: Robust PDF parsing with page preservation
-- **Markdown Conversion**: Structured content for better processing
-- **Citation Mapping**: Maintains document structure for accurate citations
-
-### Frontend Architecture
-- **Next.js 14**: Modern React framework with app directory
-- **Component-based Design**: Modular, reusable components
-- **TypeScript**: Type safety throughout the application
-- **Tailwind CSS**: Utility-first styling for rapid development
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📝 Development Notes
-
-### Adding New Features
-1. Backend: Add services in `src/services/` and routes in `src/routes/`
-2. Frontend: Create components in `src/components/` and update API service
-3. Update validation middleware and error handling as needed
-
-### Production Deployment
-- Replace in-memory storage with proper database (MongoDB, PostgreSQL)
-- Implement vector database (Pinecone, Weaviate, Chroma)
-- Add Redis for caching and session management
-- Configure proper logging and monitoring
-
-## 📄 License
-
-MIT License - see LICENSE file for details
-
-## 🆘 Support
-
-For issues and questions:
-1. Check the API documentation above
-2. Review error messages in server logs
-3. Ensure all environment variables are properly set
-4. Verify Gemini API key is valid and has sufficient quota
 
 ## 🔮 Future Enhancements
 
