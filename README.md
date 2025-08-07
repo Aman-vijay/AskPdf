@@ -1,6 +1,6 @@
 # AskPDF 
 
-A powerful full-stack web application that allows users to upload and interact with PDF documents through an intelligent chat interface. Designed to provide a seamless experience for reading, understanding, and querying documents using AI.
+A  web application that allows users to upload and interact with PDF documents through an intelligent chat interface. Designed to provide a seamless experience for reading, understanding, and querying documents using AI.
 
 Built using React Js, Node.js/Express, and Google Gemini API, the app implements a Retrieval-Augmented Generation (RAG) pipeline for highly relevant and contextual answers.
 
@@ -63,7 +63,7 @@ Document Management
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone [<repository-url>](https://github.com/Aman-vijay/AskPdf.git)
    cd AskPdf
    ```
 
