@@ -2,7 +2,7 @@
 
 A powerful full-stack web application that allows users to upload and interact with PDF documents through an intelligent chat interface. Designed to provide a seamless experience for reading, understanding, and querying documents using AI.
 
-Built using Next.js, Node.js/Express, and Google Gemini API, the app implements a Retrieval-Augmented Generation (RAG) pipeline for highly relevant and contextual answers.
+Built using React Js, Node.js/Express, and Google Gemini API, the app implements a Retrieval-Augmented Generation (RAG) pipeline for highly relevant and contextual answers.
 
 ##  Overview
 
@@ -110,7 +110,7 @@ Document Management
    npm install
    
    # Create environment file
-   echo "NEXT_PUBLIC_API_URL=http://localhost:5000" > .env.local
+   echo "VITE_PUBLIC_API_URL=http://localhost:5000" > .env.local
    ```
 
 5. **Get Gemini API Key**
@@ -244,7 +244,7 @@ GET /api/chat/suggestions/:documentId
 - Embedding dimension: 768
 
 ### Frontend Configuration
-- API URL: Configurable via `NEXT_PUBLIC_API_URL`
+- API URL: Configurable via `VITE_PUBLIC_API_URL`
 - Responsive design with Tailwind CSS
 - Component-based architecture for maintainability
 
