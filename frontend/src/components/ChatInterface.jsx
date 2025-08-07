@@ -26,7 +26,6 @@ const ChatInterface = ({ document, onBack }) => {
     if (!document) return;
     try {
       const response = await apiService.getSuggestions(document.documentId);
-      console.log("Suggestions response:", response.data);
       setSuggestions(response.data.data.suggestions || []);
     } catch (error) {
       console.error('Error loading suggestions:', error);
@@ -40,7 +39,7 @@ const ChatInterface = ({ document, onBack }) => {
     }
   }, [document]);
 
-  console.log("Suggestions loaded:", suggestions);
+
 
 const handleSendMessage = async (messageArg) => {
   const message = (messageArg ?? inputValue).trim();
