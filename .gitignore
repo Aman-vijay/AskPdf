@@ -32,3 +32,8 @@ node_modules/
 jspm_packages/
 uploads/
 data/store.json
+
+
+frontend/.env
+.gitignore
+
