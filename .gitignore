@@ -23,6 +23,10 @@ dist-ssr
 *.sln
 *.sw?
 
+#Envs
+.env
+.env.local
+
 # Dependency directories
 node_modules/
 jspm_packages/
