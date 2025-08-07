@@ -63,7 +63,7 @@ Document Management
 
 1. **Clone the repository**
    ```bash
-   git clone [<repository-url>](https://github.com/Aman-vijay/AskPdf.git)
+   git clone https://github.com/Aman-vijay/AskPdf.git
    cd AskPdf
    ```
 
